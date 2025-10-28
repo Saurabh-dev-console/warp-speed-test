@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { Activity } from "lucide-react";
+import { Activity, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface SpeedTestRecord {
   id: string;
@@ -13,13 +15,18 @@ interface SpeedTestRecord {
   test_date: string;
 }
 
-export const TestHistory = () => {
+interface TestHistoryProps {
+  refreshTrigger?: number;
+}
+
+export const TestHistory = ({ refreshTrigger }: TestHistoryProps) => {
   const [history, setHistory] = useState<SpeedTestRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchHistory();
-  }, []);
+  }, [refreshTrigger]);
 
   const fetchHistory = async () => {
     try {
@@ -35,6 +42,30 @@ export const TestHistory = () => {
       console.error('Failed to fetch history:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const clearHistory = async () => {
+    if (!confirm('Are you sure you want to clear all test history?')) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('speed_tests')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
+
+      if (error) throw error;
+      
+      setHistory([]);
+      toast.success('History cleared successfully!');
+    } catch (error) {
+      console.error('Failed to clear history:', error);
+      toast.error('Failed to clear history');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -58,7 +89,24 @@ export const TestHistory = () => {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold text-foreground">Recent Tests</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-foreground">Recent Tests</h2>
+        {history.length > 0 && (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={clearHistory}
+            disabled={deleting}
+          >
+            {deleting ? (
+              <Activity className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Trash2 className="h-4 w-4 mr-2" />
+            )}
+            Clear History
+          </Button>
+        )}
+      </div>
       <div className="grid gap-4">
         {history.map((test) => (
           <Card key={test.id} className="p-4 hover:bg-muted/50 transition-colors">

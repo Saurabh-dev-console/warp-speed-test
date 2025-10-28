@@ -6,7 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
-export const SpeedTest = () => {
+interface SpeedTestProps {
+  onTestComplete?: () => void;
+}
+
+export const SpeedTest = ({ onTestComplete }: SpeedTestProps) => {
   const [isRunning, setIsRunning] = useState(false);
   const [currentTest, setCurrentTest] = useState<'idle' | 'ping' | 'download' | 'upload'>('idle');
   const [results, setResults] = useState({
@@ -120,6 +124,9 @@ export const SpeedTest = () => {
 
       if (error) throw error;
       toast.success('Results saved!');
+      
+      // Notify parent to refresh history
+      onTestComplete?.();
     } catch (error) {
       console.error('Failed to save results:', error);
       toast.error('Failed to save results');
