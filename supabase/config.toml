@@ -1,0 +1,4 @@
+project_id = "nbiogpqjsjfwtquhsszy"
+
+[functions.speed-test]
+verify_jwt = false
