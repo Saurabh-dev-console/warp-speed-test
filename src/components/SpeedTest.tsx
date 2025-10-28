@@ -80,9 +80,13 @@ export const SpeedTest = () => {
     const uploadSizeMB = 3; // 3MB upload
     const uploadSizeBytes = uploadSizeMB * 1024 * 1024;
     
-    // Generate random data
+    // Generate random data in chunks (crypto.getRandomValues has 64KB limit)
     const data = new Uint8Array(uploadSizeBytes);
-    crypto.getRandomValues(data);
+    const chunkSize = 65536; // 64KB chunks
+    for (let i = 0; i < uploadSizeBytes; i += chunkSize) {
+      const chunk = data.subarray(i, Math.min(i + chunkSize, uploadSizeBytes));
+      crypto.getRandomValues(chunk);
+    }
     
     const startTime = performance.now();
     try {

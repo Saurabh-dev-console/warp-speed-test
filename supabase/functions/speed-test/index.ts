@@ -35,9 +35,13 @@ serve(async (req) => {
       const sizeInMB = parseInt(sizeParam) || 1;
       const sizeInBytes = sizeInMB * 1024 * 1024;
       
-      // Generate random binary data
+      // Generate random binary data in chunks (crypto.getRandomValues has 64KB limit)
       const buffer = new Uint8Array(sizeInBytes);
-      crypto.getRandomValues(buffer);
+      const chunkSize = 65536; // 64KB chunks
+      for (let i = 0; i < sizeInBytes; i += chunkSize) {
+        const chunk = buffer.subarray(i, Math.min(i + chunkSize, sizeInBytes));
+        crypto.getRandomValues(chunk);
+      }
       
       return new Response(buffer, {
         headers: {
